@@ -1,103 +1,86 @@
 # AdPause
 
-Proof of concept Chrome extension. When Amazon Prime Video shows an advertisement, AdPause covers the player with a short information card. When the ad UI goes away, the card goes away. Playback is not blocked, skipped, muted, or sped up.
+AdPause is a Chrome extension for **Amazon Prime Video** and **Hotstar / JioHotstar**. When a video advertisement starts, it covers the picture with a short “did you know?” card and **mutes** the ad. When the ad ends, the card disappears and normal playback sound comes back.
 
-## Investigation (6 Nov 2026)
+It does **not** skip, block, speed up, or click through ads. It does not change DRM or network traffic.
 
-The signed-out homepage at `https://www.primevideo.com/` already loads the player shell:
+## What it does
 
-- `#dv-web-player`
-- `.atvwebplayersdk-player-container`
-- `.atvwebplayersdk-video-surface`
-- one hidden `<video>` (0×0, not playing)
+- Detects when the streaming player is in an ad break (Prime UI timers and labels; Hotstar’s separate ad player).
+- Shows a full-screen overlay on top of the video with a rotating fact and a simple timer.
+- Mutes ad audio while the break is active, then restores sound for the show or movie.
+- If **you** pause during an ad, the overlay hides so you can see the paused frame. Mute stays on until the ad finishes or you turn the extension off.
+- Counts how many ad breaks it covered and how long they lasted (toolbar popup).
 
-The page loads this production bundle:
+## What it does not do
 
-`https://cloudfront.xp-assets.aiv-cdn.net/family/web/ATVWebPlayerSDK-1.0/wave2/ATVWebPlayerSDK.js`
+- Skip or shorten ads.
+- Remove banner or page ads outside the video player.
+- Guarantee coverage on every title (some accounts or titles have no ads; some player changes may break detection until the extension is updated).
 
-Class names are built in that bundle, not only in a debug build:
+## Supported sites
 
-```js
-debugClassName(name) => "atvwebplayersdk-" + name
-```
+| Service | URLs (examples) |
+|--------|------------------|
+| Prime Video | `primevideo.com`, Amazon `/gp/video/` storefronts |
+| Hotstar | `hotstar.com`, `jiohotstar.com` |
 
-The same helper produces the classes visible on the homepage (`atvwebplayersdk-player-container`, `atvwebplayersdk-video-surface`). Ad UI uses the same helper:
+You must be watching **in the browser** on one of these sites. The extension only runs on matched pages.
 
-| Runtime class | Role |
-|---|---|
-| `atvwebplayersdk-ad-timer` | Ad timer shell |
-| `atvwebplayersdk-ad-timer-countdown` | Countdown container |
-| `atvwebplayersdk-ad-timer-remaining-time` | Remaining time |
-| `atvwebplayersdk-ad-timer-text` / `ad-timer-ad-text` | Ad label |
-| `atvwebplayersdk-ad-resume-message` | "Your program resumes…" line |
-| `atvwebplayersdk-skip-ad-button` | Skip control. Detected only. Never clicked. |
+## How to install (Chrome)
 
-`shouldShowAdTimer()` returns true only when there is a current ad break with a duration. It returns false when a modal is open, and for some Draper prerolls once the skip control takes over. The skip button class covers that second case.
+You need a built copy of the extension (`dist/` folder).
 
-English copy shipped in the same bundle, used only as a medium-confidence backup:
-
-- `Your program resumes in {{seconds}} sec`
-- `Ad - {{seconds}}`
-- `Ad starts in {{seconds}}`
-
-These are not ad signals and are ignored:
-
-- `atvwebplayersdk-time-remaining-indicator` (title progress)
-- `atvwebplayersdk-preview-timer-remaining-time` (preview)
-- `atvwebplayersdk-skipelement-button` (skip intro / credits, not an ad)
-- `atvwebplayersdk-go-ad-free-button` (upsell, not proof an ad is playing)
-
-Ads are rendered in the same player `<video>`. There is no separate ad element to swap. A jump in `currentTime` is logged as low confidence and cannot open the overlay by itself.
-
-### Feasibility
-
-Detection is feasible when the ad-supported player shows that UI. It is not feasible from the video element alone, and it was not confirmed against a live ad break in this session (the browser was signed out, so playback never started). Titles without ads will never show the overlay. That is the correct result.
-
-## Setup
+**If you have the source repo:**
 
 ```bash
 npm install
-npm test
 npm run build
 ```
 
-Load `dist/` in Chrome:
+**Load in Chrome:**
 
 1. Open `chrome://extensions`.
-2. Turn on Developer mode.
-3. Choose "Load unpacked" and select the `dist` folder.
-4. Open Prime Video, start a title, and use the toolbar popup.
+2. Turn on **Developer mode** (top right).
+3. Click **Load unpacked** and choose the **`dist`** folder inside this project.
+4. Pin **AdPause** from the extensions menu if you like.
 
-Rebuild after code changes, then choose Reload on the extension card.
+After code changes, run `npm run build` again and click **Reload** on the extension card on `chrome://extensions`.
 
-## How it is split
+## How to use
 
-- `src/content/player-monitor.ts` finds the player, watches DOM changes, and reads playback state. It does not decide policy.
-- `src/content/ad-detector.ts` maps signals to `IDLE`, `CONTENT_PLAYING`, `AD_PLAYING`, `PAUSED`, or `UNKNOWN`.
-- `src/content/overlay-manager.ts` draws and removes the card. It never calls play, pause, seek, or volume.
-- `src/popup/App.tsx` enables the extension, shows session counts, and can run a labeled simulation.
-- `src/background/service-worker.ts` sets the default enabled flag on install.
+1. **Turn it on** — Open the AdPause icon in the toolbar. The **Enabled** switch should be on (default after install).
+2. **Start watching** — Open Prime Video or Hotstar in a tab and play a title that shows in-video ads.
+3. **During an ad** — The overlay appears automatically. You can keep watching the timer on the card; the ad still plays underneath, without sound.
+4. **After the ad** — The card goes away and program audio should return. On Hotstar, sound may take a second or two while the player settles.
+5. **Popup details** — Status, signal name, interruption count, and total ad time. Useful to confirm the tab is connected.
+6. **Simulate ad** (optional) — In the popup, **Simulate ad** previews the card **without** a real ad and **without** muting. Use **End simulation** to dismiss. Simulated breaks are not counted as real ads.
 
-State changes are logged in the page console as `[AdPause]` with the time, state, signal, confidence, and reason.
+If the popup says the tab has not connected yet, **reload the watch page** and open AdPause again.
 
-The popup button **Simulate ad** forces the overlay and is labeled "Diagnostic simulation". It is not counted as a detected interruption.
+## Permissions (why Chrome asks)
 
-## Tests run here
+- **Storage** — Remember enabled/disabled and show status in the popup.
+- **Active tab & scripting** — Talk to the player page on Prime/Hotstar and inject the content script when needed.
 
-| Check | Result |
-|---|---|
-| Detector unit tests (play, pause, high signal, medium copy, low signal ignored, disable, simulation) | `npm test` |
-| Extension build (popup, service worker, content script) | `npm run build` |
-| Signed-out Prime Video homepage exposes the ATV player shell and SDK bundle | Observed |
-| Live ad start / end on a playing title | Not run. Requires a signed-in ad-supported playback. |
-| Fullscreen and title changes during a real ad | Not run, for the same reason. |
+No account data is sent to a server; behavior is local in your browser.
 
-On a watch page, "Simulate ad" then "End simulation" is the stand-in for the overlay path until a real break is available. Disable should remove the card immediately.
+## Tips & troubleshooting
 
-## Limitations
+| Issue | Try |
+|--------|-----|
+| No overlay on a real ad | Confirm you’re on a supported URL, extension is enabled, and the tab was open before or refreshed after install. |
+| Popup says “Not on Prime Video or Hotstar” | Switch to a watch tab on those sites. |
+| Sound still off after a Hotstar ad | Wait a few seconds; refresh the page if needed. Report if it persists. |
+| Overlay on simulate only, never on live ads | Title may be ad-free, or the player UI changed. Check the page console for `[AdPause]` logs. |
 
-- Selectors live in one module because Amazon can change the player in any deploy.
-- Subscribers on ad-free playback will see no overlay. There is often no ad signal to find.
-- If the player fullscreens the raw `<video>` element, a sibling overlay cannot be drawn on top of that fullscreen surface. Prime usually fullscreens the player container.
-- Countdown text is parsed only for `m:ss` and the English sentences above. Elapsed time is measured from the moment the signal appears, so it can miss the first fraction of a second.
-- The extension does not look at manifests, EME, or network traffic.
+## For developers
+
+```bash
+npm test    # detector unit tests
+npm run build
+```
+
+Main pieces: `player-monitor.ts` (DOM + player), `ad-detector.ts` (state machine), `overlay-manager.ts` (card UI), `src/popup/App.tsx` (popup), `src/content/index.ts` (mute, cover timing, session stats).
+
+State changes log in the page console as `[AdPause]` with state, signal, confidence, and reason.
