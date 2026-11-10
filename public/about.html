@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>AdPause</title>
+    <style>
+      body {
+        margin: 0;
+        font-family: "Segoe UI", sans-serif;
+        background: #12161d;
+        color: #f4f1ea;
+      }
+      main {
+        max-width: 680px;
+        margin: 0 auto;
+        padding: 48px 20px;
+      }
+      h1 {
+        margin-bottom: 8px;
+      }
+      p,
+      li {
+        line-height: 1.5;
+      }
+      a {
+        color: #9ecbff;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>AdPause</h1>
+      <p>A proof of concept for Amazon Prime Video and Hotstar (including JioHotstar). It watches the player for an advertisement, covers the picture with a short information card, and mutes ad audio until the ad ends.</p>
+      <p>It does not skip or speed up advertisements, and it does not touch DRM or network requests.</p>
+      <p>On Prime Video, detection uses visible player UI from the ATV Web Player SDK, including <code>atvwebplayersdk-ad-timer</code>. On Hotstar, it uses the separate ad video in <code>ad-video-container</code>. If those signals are absent, the overlay stays hidden.</p>
+      <p>Use “Simulate ad” in the toolbar popup to preview the overlay without a live ad. That path is labeled as a simulation.</p>
+    </main>
+  </body>
+</html>

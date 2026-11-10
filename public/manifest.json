@@ -1,0 +1,49 @@
+{
+  "manifest_version": 3,
+  "name": "AdPause",
+  "version": "0.1.0",
+  "description": "Covers a Prime Video or Hotstar advertisement with a short information card and mutes it until the ad ends. Does not skip ads.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_title": "AdPause",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "permissions": ["storage", "scripting", "activeTab"],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.primevideo.com/*",
+        "https://primevideo.com/*",
+        "https://*.primevideo.com/*",
+        "https://www.amazon.com/gp/video/*",
+        "https://www.amazon.co.uk/gp/video/*",
+        "https://www.amazon.de/gp/video/*",
+        "https://www.amazon.in/gp/video/*",
+        "https://www.amazon.ca/gp/video/*",
+        "https://www.amazon.com.au/gp/video/*",
+        "https://www.amazon.co.jp/gp/video/*",
+        "https://www.hotstar.com/*",
+        "https://hotstar.com/*",
+        "https://*.hotstar.com/*",
+        "https://www.jiohotstar.com/*",
+        "https://jiohotstar.com/*",
+        "https://*.jiohotstar.com/*"
+      ],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
