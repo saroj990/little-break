@@ -21,7 +21,12 @@
     "service_worker": "background.js",
     "type": "module"
   },
-  "permissions": ["storage", "scripting", "activeTab"],
+  "permissions": ["storage", "scripting", "activeTab", "alarms"],
+  "host_permissions": [
+    "https://en.wikipedia.org/*",
+    "https://*.wikipedia.org/*",
+    "https://*.wikimedia.org/*"
+  ],
   "content_scripts": [
     {
       "matches": [

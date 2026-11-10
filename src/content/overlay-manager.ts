@@ -1,10 +1,10 @@
 import overlayCss from "../styles/overlay.css?inline";
-import { factForInterruption } from "../data/sample-content.ts";
+import type { ContentCard } from "../shared/content-card.ts";
 
 const HOST_ID = "adpause-host";
 
 export interface OverlayContent {
-  factIndex: number;
+  card: ContentCard;
   elapsedSeconds: number;
   remainingSeconds: number | null;
   simulated: boolean;
@@ -110,7 +110,7 @@ export class OverlayManager {
   private render(content: OverlayContent): void {
     const root = this.shadow?.querySelector("div");
     if (!root) return;
-    const fact = factForInterruption(content.factIndex);
+    const fact = content.card;
     root.className = "adpause-overlay";
     root.replaceChildren();
 
@@ -129,6 +129,20 @@ export class OverlayManager {
     kicker.className = "adpause-kicker";
     kicker.textContent = fact.kicker;
 
+    if (fact.imageDataUrl) {
+      const media = document.createElement("div");
+      media.className = "adpause-media";
+      const image = document.createElement("img");
+      image.className = "adpause-image";
+      image.alt = "";
+      image.decoding = "async";
+      image.src = fact.imageDataUrl;
+      media.append(image);
+      card.append(brand, heading, media, kicker);
+    } else {
+      card.append(brand, heading, kicker);
+    }
+
     const factText = document.createElement("p");
     factText.className = "adpause-fact";
     factText.textContent = fact.text;
@@ -140,14 +154,15 @@ export class OverlayManager {
     live.className = "adpause-live";
     const dot = document.createElement("i");
     const liveText = document.createElement("span");
-    liveText.textContent = "Monitoring playback";
+    liveText.textContent =
+      fact.source === "wikipedia-onthisday" ? "Wikipedia · On this day" : "Monitoring playback";
     live.append(dot, liveText);
 
     const time = document.createElement("span");
     time.textContent = formatTiming(content.elapsedSeconds, content.remainingSeconds);
 
     meta.append(live, time);
-    card.append(brand, heading, kicker, factText, meta);
+    card.append(factText, meta);
 
     if (content.simulated) {
       const sim = document.createElement("p");

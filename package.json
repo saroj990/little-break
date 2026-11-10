@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc --noEmit && vite build && vite build --config vite.content.config.ts",
-    "test": "esbuild src/content/ad-detector.test.ts --bundle --platform=node --format=esm --external:node:* --outfile=dist-test/ad-detector.test.mjs && node --test dist-test/ad-detector.test.mjs",
+    "test": "esbuild src/content/ad-detector.test.ts src/background/wikipedia-feed.test.ts --bundle --platform=node --format=esm --external:node:* --outdir=dist-test --out-extension:.js=.mjs --entry-names=[name] && node --test dist-test/ad-detector.test.mjs dist-test/wikipedia-feed.test.mjs",
     "icons": "node scripts/make-icons.mjs"
   },
   "dependencies": {

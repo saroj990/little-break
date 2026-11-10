@@ -1,6 +1,8 @@
 import { adBreakAction, contentAudioToRestore, shouldShowOverlay, type AudioLevel } from "./ad-detector.ts";
 import { OverlayManager } from "./overlay-manager.ts";
 import { PlayerMonitor } from "./player-monitor.ts";
+import { cardForInterruption } from "../data/sample-content.ts";
+import { FEED_STORAGE_KEY, isStoredContentFeed, type ContentCard } from "../shared/content-card.ts";
 import { isExtensionMessage } from "../shared/messages.ts";
 import type { DetectionSnapshot, SessionStatus } from "../shared/types.ts";
 
@@ -8,6 +10,7 @@ const ENABLED_KEY = "enabled";
 
 let enabled = true;
 let simulated = false;
+let feedCards: ContentCard[] = [];
 let adCount = 0;
 let adDurationMs = 0;
 let adStartedAt: number | null = null;
@@ -207,9 +210,13 @@ function applySimulated(snapshot: DetectionSnapshot): void {
   publish();
 }
 
+function currentCard(): ContentCard {
+  return cardForInterruption(Math.max(0, adCount - 1), feedCards);
+}
+
 function paintOverlay(anchor: HTMLElement): void {
   overlay.show(anchor, {
-    factIndex: Math.max(0, adCount - 1),
+    card: currentCard(),
     elapsedSeconds: elapsedSeconds(),
     remainingSeconds: latest.remainingSeconds,
     simulated: latest.simulated,
@@ -250,7 +257,7 @@ function startClock(): void {
     const anchor = monitor?.playerElement();
     if (!anchor || latest.state !== "AD_PLAYING") return;
     overlay.update({
-      factIndex: Math.max(0, adCount - 1),
+      card: currentCard(),
       elapsedSeconds: latest.simulated ? simulatedElapsed() : elapsedSeconds(),
       remainingSeconds: latest.remainingSeconds,
       simulated: latest.simulated,
@@ -460,7 +467,11 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area !== "local" || !changes[ENABLED_KEY]) return;
+  if (area !== "local") return;
+  if (changes[FEED_STORAGE_KEY]) {
+    feedCards = cardsFromStorage(changes[FEED_STORAGE_KEY].newValue);
+  }
+  if (!changes[ENABLED_KEY]) return;
   const next = changes[ENABLED_KEY].newValue;
   if (typeof next !== "boolean" || next === enabled) return;
   enabled = next;
@@ -491,8 +502,9 @@ window.setInterval(() => {
   resetDetection();
 }, 400);
 
-void chrome.storage.local.get(ENABLED_KEY).then((stored) => {
+void chrome.storage.local.get([ENABLED_KEY, FEED_STORAGE_KEY]).then((stored) => {
   if (typeof stored[ENABLED_KEY] === "boolean") enabled = stored[ENABLED_KEY];
+  feedCards = cardsFromStorage(stored[FEED_STORAGE_KEY]);
   monitor = new PlayerMonitor({
     onSnapshot: applySnapshot,
     simulated: () => simulated,
@@ -500,4 +512,8 @@ void chrome.storage.local.get(ENABLED_KEY).then((stored) => {
   monitor.start();
   publish();
 });
+}
+
+function cardsFromStorage(value: unknown): ContentCard[] {
+  return isStoredContentFeed(value) ? value.cards : [];
 }
