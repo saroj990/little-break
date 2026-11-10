@@ -25,7 +25,11 @@
   "host_permissions": [
     "https://en.wikipedia.org/*",
     "https://*.wikipedia.org/*",
-    "https://*.wikimedia.org/*"
+    "https://*.wikimedia.org/*",
+    "https://feeds.bbci.co.uk/*",
+    "https://ichef.bbci.co.uk/*",
+    "https://*.bbci.co.uk/*",
+    "https://*.bbc.co.uk/*"
   ],
   "content_scripts": [
     {

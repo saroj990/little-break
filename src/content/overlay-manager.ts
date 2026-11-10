@@ -154,8 +154,7 @@ export class OverlayManager {
     live.className = "adpause-live";
     const dot = document.createElement("i");
     const liveText = document.createElement("span");
-    liveText.textContent =
-      fact.source === "wikipedia-onthisday" ? "Wikipedia · On this day" : "Monitoring playback";
+    liveText.textContent = sourceLabel(fact.source);
     live.append(dot, liveText);
 
     const time = document.createElement("span");
@@ -219,6 +218,12 @@ export class OverlayManager {
     window.removeEventListener("scroll", this.place, true);
     document.removeEventListener("fullscreenchange", this.place);
   }
+}
+
+function sourceLabel(source: string | undefined): string {
+  if (source === "bbc-news") return "BBC News";
+  if (source === "wikipedia-onthisday") return "Wikipedia · On this day";
+  return "Monitoring playback";
 }
 
 function formatTiming(elapsedSeconds: number, remainingSeconds: number | null): string {
