@@ -74,6 +74,12 @@ export class OverlayManager {
     if (ad instanceof HTMLElement && this.boxIsOnScreen(ad)) return ad;
     const surface = anchor.querySelector(".atvwebplayersdk-video-surface");
     if (surface instanceof HTMLElement && surface.getBoundingClientRect().height >= 80) return surface;
+    const sony = anchor.querySelector("#main_video, .main_video_player, .spn-revamp-player");
+    if (sony instanceof HTMLElement && sony.getBoundingClientRect().height >= 80) {
+      const sonyVideo = sony.querySelector("video");
+      if (sonyVideo instanceof HTMLElement && sonyVideo.getBoundingClientRect().height >= 80) return sonyVideo;
+      return sony;
+    }
     const video = [...anchor.querySelectorAll("video")].find((candidate) => candidate.getBoundingClientRect().height >= 80);
     if (video instanceof HTMLElement) return video;
     return anchor;

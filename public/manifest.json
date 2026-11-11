@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "AdPause",
   "version": "0.1.0",
-  "description": "Covers a Prime Video or Hotstar advertisement with a short information card and mutes it until the ad ends. Does not skip ads.",
+  "description": "Covers a Prime Video, Hotstar, or Sony LIV advertisement with a short information card and mutes it until the ad ends. Does not skip ads.",
   "icons": {
     "16": "icons/icon16.png",
     "32": "icons/icon32.png",
@@ -49,7 +49,10 @@
         "https://*.hotstar.com/*",
         "https://www.jiohotstar.com/*",
         "https://jiohotstar.com/*",
-        "https://*.jiohotstar.com/*"
+        "https://*.jiohotstar.com/*",
+        "https://www.sonyliv.com/*",
+        "https://sonyliv.com/*",
+        "https://*.sonyliv.com/*"
       ],
       "js": ["content.js"],
       "run_at": "document_idle"

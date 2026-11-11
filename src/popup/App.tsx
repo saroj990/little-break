@@ -7,7 +7,7 @@ const EMPTY: SessionStatus = {
   state: "IDLE",
   confidence: "none",
   signalId: null,
-  reason: "Open Prime Video or Hotstar and start playback.",
+  reason: "Open Prime Video, Hotstar, or Sony LIV and start playback.",
   adCount: 0,
   adDurationMs: 0,
   simulated: false,
@@ -22,6 +22,7 @@ function isSupportedUrl(url: string | undefined): boolean {
     if (host === "primevideo.com" || host.endsWith(".primevideo.com")) return true;
     if (host === "hotstar.com" || host.endsWith(".hotstar.com")) return true;
     if (host === "jiohotstar.com" || host.endsWith(".jiohotstar.com")) return true;
+    if (host === "sonyliv.com" || host.endsWith(".sonyliv.com")) return true;
     return /(^|\.)amazon\./.test(host) && /\/gp\/video|\/video\//.test(parsed.pathname);
   } catch {
     return false;
@@ -127,7 +128,7 @@ export function App() {
       <dl>
         <div>
           <dt>Status</dt>
-          <dd>{tabReady ? labelFor(status) : watchPage ? "On this page" : "Not on Prime Video or Hotstar"}</dd>
+          <dd>{tabReady ? labelFor(status) : watchPage ? "On this page" : "Not on a supported player"}</dd>
         </div>
         <div>
           <dt>Signal</dt>

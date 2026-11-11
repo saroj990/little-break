@@ -56,6 +56,43 @@ export const AD_INDICATORS: readonly AdIndicator[] = [
     selector: ".atvwebplayersdk-skip-ad-button",
     description: "SDK skip-ad control. Presence only — never clicked.",
   },
+  // Sony LIV (player.sonyliv.com SPN player + Google IMA / DAI). Verified 2026-11-11.
+  {
+    id: "sonyliv-ad-wrapper",
+    confidence: "high",
+    selector: ".ad-wrapper",
+    description: "Sony LIV IMA ad layer (hidden via .ad-layer-hidden when idle)",
+  },
+  {
+    id: "sonyliv-ad-controls",
+    confidence: "high",
+    selector: ".ad-controls",
+    description: "Sony LIV ad chrome mounted during an ad break",
+  },
+  {
+    id: "sonyliv-ad-timer",
+    confidence: "high",
+    selector: ".ad-timer-container, .ad-label-timer",
+    description: "Sony LIV ad countdown timer",
+  },
+  {
+    id: "sonyliv-ad-label",
+    confidence: "high",
+    selector: ".ad-label-text, .ad-label-container",
+    description: "Sony LIV on-screen AD label",
+  },
+  {
+    id: "sonyliv-dai-playing",
+    confidence: "high",
+    selector: ".dai-ad-playing",
+    description: "Sony LIV player wrapper marked while a DAI ad plays",
+  },
+  {
+    id: "sonyliv-skip-ad",
+    confidence: "high",
+    selector: ".skip_ad",
+    description: "Sony LIV skip-ad control. Presence only — never clicked.",
+  },
 ];
 
 /** Copy from the player bundle's English avod strings. Scoped to the player root. */
@@ -163,6 +200,20 @@ export function parseRemainingSeconds(text: string | null | undefined): number |
   const labeled = value.match(/(\d+)\s*sec\b/i);
   if (labeled && /ad|program resumes/i.test(value)) return Number(labeled[1]);
   return null;
+}
+
+/** Sony LIV splits remaining time across .ad-timer-mm ("0:") and .ad-timer-ss ("12"). */
+export function parseSonyAdTimer(
+  minutesText: string | null | undefined,
+  secondsText: string | null | undefined,
+): number | null {
+  const minutes = Number(String(minutesText ?? "").replace(/[^\d]/g, ""));
+  const seconds = Number(String(secondsText ?? "").replace(/[^\d]/g, ""));
+  if (!Number.isFinite(minutes) || !Number.isFinite(seconds)) return null;
+  if (seconds > 59) return null;
+  const total = minutes * 60 + seconds;
+  if (total <= 0 || total > 180) return null;
+  return total;
 }
 
 export function strongestSignal(

@@ -6,6 +6,7 @@ import {
   contentAudioToRestore,
   hotstarAdVisible,
   parseRemainingSeconds,
+  parseSonyAdTimer,
   pausedFromControlLabel,
   remainingFromMedia,
   shouldShowOverlay,
@@ -213,5 +214,25 @@ describe("parseRemainingSeconds", () => {
     assert.equal(parseRemainingSeconds("Ad - 8"), 8);
     assert.equal(parseRemainingSeconds("Feature"), null);
     assert.equal(parseRemainingSeconds("Add to Watchlist"), null);
+  });
+});
+
+describe("parseSonyAdTimer", () => {
+  it("joins Sony LIV minute and second timer nodes", () => {
+    assert.equal(parseSonyAdTimer("0:", "12"), 12);
+    assert.equal(parseSonyAdTimer("1:", "05"), 65);
+    assert.equal(parseSonyAdTimer("-00:", "-00"), null);
+    assert.equal(parseSonyAdTimer("0:", "90"), null);
+  });
+
+  it("shows the overlay for a Sony LIV ad timer signal", () => {
+    const snapshot = detect(
+      observe({
+        remainingSeconds: 18,
+        signals: [{ id: "sonyliv-ad-timer", confidence: "high", detail: "Sony timer" }],
+      }),
+    );
+    assert.equal(snapshot.state, "AD_PLAYING");
+    assert.equal(shouldShowOverlay(snapshot, true), true);
   });
 });

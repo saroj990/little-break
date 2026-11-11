@@ -6,6 +6,7 @@ import {
   hotstarAdVisible,
   matchesAdCopy,
   parseRemainingSeconds,
+  parseSonyAdTimer,
   pausedFromControlLabel,
   remainingFromMedia,
   type HotstarMediaProbe,
@@ -13,6 +14,10 @@ import {
 import type { DetectionSnapshot, DiagnosticEntry } from "../shared/types.ts";
 
 const PLAYER_SELECTORS = [
+  "#dynamicPlayer",
+  "#main_video",
+  ".spn-revamp-player",
+  ".main_video_player",
   ".atvwebplayersdk-player-container",
   ".webPlayerSDKContainer",
   "#dv-web-player",
@@ -333,7 +338,7 @@ function collectSignals(player: HTMLElement): Array<{
   for (const indicator of AD_INDICATORS) {
     const nodes = player.querySelectorAll(indicator.selector);
     for (const node of nodes) {
-      if (!isAttached(node)) continue;
+      if (!isAdSignalNode(node)) continue;
       signals.push({
         id: indicator.id,
         confidence: indicator.confidence,
@@ -400,6 +405,17 @@ function readRemaining(player: HTMLElement | null): number | null {
     if (!video || !hotstarAdVisible(probeHotstar(video))) return null;
     return remainingFromMedia(video.duration, video.currentTime);
   }
+  const sonyMm = player.querySelector(".ad-timer-mm");
+  const sonySs = player.querySelector(".ad-timer-ss");
+  if (
+    sonyMm instanceof HTMLElement &&
+    sonySs instanceof HTMLElement &&
+    isAdSignalNode(sonyMm) &&
+    isAdSignalNode(sonySs)
+  ) {
+    const sony = parseSonyAdTimer(sonyMm.textContent, sonySs.textContent);
+    if (sony != null) return sony;
+  }
   const node = player.querySelector(".atvwebplayersdk-ad-timer-remaining-time");
   if (!(node instanceof HTMLElement) || !isAttached(node)) return null;
   const parsed = parseRemainingSeconds(node.textContent);
@@ -420,6 +436,17 @@ function isAttached(element: Element): boolean {
   let current: HTMLElement | null = element;
   while (current) {
     if (getComputedStyle(current).display === "none") return false;
+    current = current.parentElement;
+  }
+  return true;
+}
+
+/** Sony LIV keeps the IMA layer in the DOM and toggles .ad-layer-hidden between ads. */
+function isAdSignalNode(element: Element): boolean {
+  if (!isAttached(element)) return false;
+  let current: Element | null = element;
+  while (current instanceof HTMLElement) {
+    if (current.classList.contains("ad-layer-hidden")) return false;
     current = current.parentElement;
   }
   return true;
